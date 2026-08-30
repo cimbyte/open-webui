@@ -1,0 +1,21 @@
+name: Publish container package access
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish-access:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Make the source-only container publicly pullable
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api \
+            --method PATCH \
+            "/orgs/${GITHUB_REPOSITORY_OWNER}/packages/container/open-webui" \
+            -f visibility=public
