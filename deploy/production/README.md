@@ -1,10 +1,10 @@
 # Production deployment
 
 The container image is built on GitHub-hosted x64 and ARM64 runners and stored
-in GHCR. Production must run on the Raspberry Pi cluster or a managed cloud
-service. T14 and Legion are developer workstations. They must not be used as a
-production runtime, reverse proxy, Actions runner, image or artifact store,
-update server, tunnel endpoint, or deployment relay.
+in GHCR. The normal production target is the Raspberry Pi cluster or a managed
+cloud service. The repository also contains a user-approved, Tailnet-only
+Legion deployment for the private two-user Nomadic installation. Legion must
+not be used as an Actions runner, image or artifact store, or public endpoint.
 
 The repository does not perform deployment. The image workflow publishes:
 

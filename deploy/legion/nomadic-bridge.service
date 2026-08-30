@@ -1,0 +1,14 @@
+[Unit]
+Description=Nomadic Open WebUI bridge
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/nomadic bridge --listen=127.0.0.1:8490 --token-file=%h/.config/nomadic-open-webui/bridge-token
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+
+[Install]
+WantedBy=default.target
