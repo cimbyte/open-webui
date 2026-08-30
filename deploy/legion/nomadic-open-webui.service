@@ -7,8 +7,8 @@ Requires=nomadic-bridge.service
 Type=simple
 EnvironmentFile=%h/.config/nomadic-open-webui/runtime.env
 ExecStartPre=-/usr/bin/docker rm -f nomadic-open-webui
-ExecStartPre=/usr/bin/docker pull ghcr.io/cimbyte/open-webui:git-5fe3dbd5c1ff8f2f011bb51a9b47469fba7183fa
-ExecStart=/usr/bin/docker run --rm --name nomadic-open-webui --network host --read-only --tmpfs /tmp:rw,nosuid,nodev,size=1g --env-file %h/.config/nomadic-open-webui/runtime.env --volume nomadic-open-webui-data:/app/backend/data ghcr.io/cimbyte/open-webui:git-5fe3dbd5c1ff8f2f011bb51a9b47469fba7183fa
+ExecStartPre=/usr/bin/docker pull ghcr.io/cimbyte/open-webui@sha256:4ef99c325f6ec2be0462da2578561e77ebdbc7797879d829aa39bab122b4705b
+ExecStart=/usr/bin/docker run --rm --name nomadic-open-webui --network host --read-only --tmpfs /tmp:rw,nosuid,nodev,size=1g --env-file %h/.config/nomadic-open-webui/runtime.env --volume nomadic-open-webui-data:/app/backend/data ghcr.io/cimbyte/open-webui@sha256:4ef99c325f6ec2be0462da2578561e77ebdbc7797879d829aa39bab122b4705b
 ExecStop=/usr/bin/docker stop -t 20 nomadic-open-webui
 Restart=on-failure
 RestartSec=5

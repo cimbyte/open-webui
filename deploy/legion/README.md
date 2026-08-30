@@ -9,7 +9,6 @@ The bridge and Open WebUI secrets stay in mode-0600 files under
 `~/.config/nomadic-open-webui`. Open WebUI data stays in the named Docker
 volume `nomadic-open-webui-data`. Neither secret belongs in Git.
 
-The service uses the immutable source tag for commit `5fe3dbd5c`. Replace the
-tag with its published digest after the multi-architecture workflow completes.
-The container binds `127.0.0.1:18782` through host networking so it can reach
-the loopback-only Nomadic bridge at `127.0.0.1:8490`.
+The service pins the verified multi-architecture digest published from commit
+`5fe3dbd5c`. The container binds `127.0.0.1:18782` through host networking so
+it can reach the loopback-only Nomadic bridge at `127.0.0.1:8490`.
