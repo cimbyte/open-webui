@@ -9,6 +9,10 @@ The bridge and Open WebUI secrets stay in mode-0600 files under
 `~/.config/nomadic-open-webui`. Open WebUI data stays in the named Docker
 volume `nomadic-open-webui-data`. Neither secret belongs in Git.
 
+Signed Android updates are served only through the authenticated Tailnet
+gateway from `~/.local/share/nomadic/android-dist`. The Android client uses
+this endpoint as a fallback when the public production update feed is offline.
+
 The service pins the verified multi-architecture digest published from commit
 `5fe3dbd5c`. The container binds `127.0.0.1:18782` through host networking so
 it can reach the loopback-only Nomadic bridge at `127.0.0.1:8490`.
