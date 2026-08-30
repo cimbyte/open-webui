@@ -2,8 +2,11 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
 import { viteStaticCopy } from 'vite-plugin-static-copy';
+import { openWebUIBasePath } from './scripts/open-webui-base-path.mjs';
 
 const backendTarget = process.env.WEBUI_BACKEND_URL || 'http://localhost:8080';
+const backendRoute = (path: string) => `${openWebUIBasePath}${path}`;
+const stripBasePath = (path: string) => openWebUIBasePath && path.startsWith(openWebUIBasePath) ? path.slice(openWebUIBasePath.length) || '/' : path;
 
 export default defineConfig({
 	plugins: [
@@ -27,26 +30,28 @@ export default defineConfig({
 	},
 	server: {
 		proxy: {
-			'/api': {
+			[backendRoute('/api')]: {
 				target: backendTarget,
 				changeOrigin: true,
+				rewrite: stripBasePath,
 				ws: true
 			},
-			'/ollama': {
+			[backendRoute('/ollama')]: {
 				target: backendTarget,
-				changeOrigin: true
+				changeOrigin: true, rewrite: stripBasePath
 			},
-			'/openai': {
+			[backendRoute('/openai')]: {
 				target: backendTarget,
-				changeOrigin: true
+				changeOrigin: true, rewrite: stripBasePath
 			},
-			'/oauth': {
+			[backendRoute('/oauth')]: {
 				target: backendTarget,
-				changeOrigin: true
+				changeOrigin: true, rewrite: stripBasePath
 			},
-			'/ws': {
+			[backendRoute('/ws')]: {
 				target: backendTarget,
 				changeOrigin: true,
+				rewrite: stripBasePath,
 				ws: true
 			}
 		}

@@ -33,6 +33,13 @@ KEY_FILE="${WEBUI_SECRET_KEY_FILE:-.webui_secret_key}"
 WEBUI_SECRET_KEY_LENGTH="${WEBUI_SECRET_KEY_LENGTH:-24}"
 PORT="${PORT:-8080}"
 HOST="${HOST:-0.0.0.0}"
+OPEN_WEBUI_BASE_PATH="${OPEN_WEBUI_BASE_PATH:-}"
+if [[ "$OPEN_WEBUI_BASE_PATH" == "/" ]]; then
+  OPEN_WEBUI_BASE_PATH=""
+elif [[ -n "$OPEN_WEBUI_BASE_PATH" ]] && { [[ "$OPEN_WEBUI_BASE_PATH" != /* ]] || [[ "$OPEN_WEBUI_BASE_PATH" == */ ]] || [[ "$OPEN_WEBUI_BASE_PATH" == *"?"* ]] || [[ "$OPEN_WEBUI_BASE_PATH" == *"#"* ]] || [[ "/$OPEN_WEBUI_BASE_PATH/" == *"/../"* ]] || [[ "/$OPEN_WEBUI_BASE_PATH/" == *"/./"* ]]; }; then
+  echo "OPEN_WEBUI_BASE_PATH must be empty or an absolute path without a trailing slash, dot segment, query, or fragment." >&2
+  exit 2
+fi
 
 if [[ -z "${WEBUI_SECRET_KEY:-}" && -z "${WEBUI_JWT_SECRET_KEY:-}" ]]; then
   echo "No WEBUI_SECRET_KEY environment variable set, loading from file."
@@ -72,7 +79,7 @@ if [[ -n "${SPACE_ID:-}" ]]; then
   if [[ -n "${ADMIN_USER_EMAIL:-}" && -n "${ADMIN_USER_PASSWORD:-}" ]]; then
     echo "Creating admin user for Space..."
     WEBUI_SECRET_KEY="${WEBUI_SECRET_KEY:-}" \
-      uvicorn open_webui.main:app --host "$HOST" --port "$PORT" --forwarded-allow-ips "${FORWARDED_ALLOW_IPS:-*}" --ws-per-message-deflate "${UVICORN_WS_PER_MESSAGE_DEFLATE:-true}" &
+      uvicorn open_webui.main:app --host "$HOST" --port "$PORT" --root-path "$OPEN_WEBUI_BASE_PATH" --forwarded-allow-ips "${FORWARDED_ALLOW_IPS:-*}" --ws-per-message-deflate "${UVICORN_WS_PER_MESSAGE_DEFLATE:-true}" &
     webui_pid=$!
 
     echo "Waiting for server to become healthy..."
@@ -110,4 +117,5 @@ exec env WEBUI_SECRET_KEY="${WEBUI_SECRET_KEY:-}" \
     --host "$HOST" \
     --port "$PORT" \
     --forwarded-allow-ips "${FORWARDED_ALLOW_IPS:-*}" \
+    --root-path "$OPEN_WEBUI_BASE_PATH" \
     "${ARGS[@]}"

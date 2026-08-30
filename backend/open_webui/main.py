@@ -160,6 +160,7 @@ from open_webui.routers import (
     knowledge,
     memories,
     models,
+    nomadic,
     notes,
     notifications,
     ollama,
@@ -840,6 +841,7 @@ app.include_router(notes.router, prefix='/api/v1/notes', tags=['notes'])
 
 
 app.include_router(models.router, prefix='/api/v1/models', tags=['models'])
+app.include_router(nomadic.router, prefix='/api/v1/nomadic', tags=['nomadic'])
 app.include_router(notifications.router, prefix='/api/v1/notifications', tags=['notifications'])
 app.include_router(knowledge.router, prefix='/api/v1/knowledge', tags=['knowledge'])
 app.include_router(prompts.router, prefix='/api/v1/prompts', tags=['prompts'])
@@ -3013,12 +3015,13 @@ async def serve_cache_file(
 
 
 def swagger_ui_html(*args, **kwargs):
+    base_path = os.getenv('OPEN_WEBUI_BASE_PATH', '').rstrip('/')
     return get_swagger_ui_html(
         *args,
         **kwargs,
-        swagger_js_url='/static/swagger-ui/swagger-ui-bundle.js',
-        swagger_css_url='/static/swagger-ui/swagger-ui.css',
-        swagger_favicon_url='/static/swagger-ui/favicon.png',
+        swagger_js_url=f'{base_path}/static/swagger-ui/swagger-ui-bundle.js',
+        swagger_css_url=f'{base_path}/static/swagger-ui/swagger-ui.css',
+        swagger_favicon_url=f'{base_path}/static/swagger-ui/favicon.png',
     )
 
 

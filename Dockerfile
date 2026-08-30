@@ -5,6 +5,7 @@ ARG USE_CUDA=false
 ARG USE_OLLAMA=false
 ARG USE_SLIM=false
 ARG USE_PERMISSION_HARDENING=false
+ARG OPEN_WEBUI_BASE_PATH=/web
 # Tested with cu117 for CUDA 11 and cu121 for CUDA 12 (default)
 ARG USE_CUDA_VER=cu128
 # any sentence transformer model; models to use can be found at https://huggingface.co/models?library=sentence-transformers
@@ -26,6 +27,7 @@ ARG GID=0
 ######## WebUI frontend ########
 FROM --platform=$BUILDPLATFORM node:22-alpine3.20 AS build
 ARG BUILD_HASH
+ARG OPEN_WEBUI_BASE_PATH
 
 # Set Node.js options (heap limit Allocation failed - JavaScript heap out of memory)
 # ENV NODE_OPTIONS="--max-old-space-size=4096"
@@ -39,7 +41,8 @@ COPY package.json package-lock.json ./
 RUN npm ci --force
 
 COPY . .
-ENV APP_BUILD_HASH=${BUILD_HASH}
+ENV APP_BUILD_HASH=${BUILD_HASH} \
+    OPEN_WEBUI_BASE_PATH=${OPEN_WEBUI_BASE_PATH}
 RUN npm run build
 
 ######## WebUI backend ########
@@ -51,6 +54,7 @@ ARG USE_OLLAMA
 ARG USE_CUDA_VER
 ARG USE_SLIM
 ARG USE_PERMISSION_HARDENING
+ARG OPEN_WEBUI_BASE_PATH
 ARG USE_EMBEDDING_MODEL
 ARG USE_RERANKING_MODEL
 ARG USE_AUXILIARY_EMBEDDING_MODEL
@@ -58,7 +62,8 @@ ARG UID
 ARG GID
 
 # Python settings
-ENV PYTHONUNBUFFERED=1
+ENV PYTHONUNBUFFERED=1 \
+    OPEN_WEBUI_BASE_PATH=${OPEN_WEBUI_BASE_PATH}
 
 ## Basis ##
 ENV ENV=prod \
