@@ -96,3 +96,33 @@ export const reorderNomadicSessions = (token: string, projectPath: string, sessi
 			idempotency_key: crypto.randomUUID()
 		})
 	});
+
+export const getNomadicBinding = (token: string, openWebUIChatId: string) =>
+	request<NomadicBinding>(token, `/bindings/${encodeURIComponent(openWebUIChatId)}`);
+
+export const promptNomadicChat = (
+	token: string,
+	chatId: string,
+	projectPath: string,
+	text: string
+) =>
+	request(token, `/chats/${encodeURIComponent(chatId)}/prompt`, {
+		method: 'POST',
+		body: JSON.stringify({
+			project_path: projectPath,
+			text,
+			idempotency_key: crypto.randomUUID()
+		})
+	});
+
+export const interruptNomadicChat = (token: string, chatId: string, projectPath: string) =>
+	request(token, `/chats/${encodeURIComponent(chatId)}/interrupt`, {
+		method: 'POST',
+		body: JSON.stringify({
+			project_path: projectPath,
+			idempotency_key: crypto.randomUUID()
+		})
+	});
+
+export const nomadicEventsUrl = (chatId: string, projectPath: string, after = 0) =>
+	`${WEBUI_API_BASE_URL}/nomadic/chats/${encodeURIComponent(chatId)}/events?project_path=${encodeURIComponent(projectPath)}&after=${after}`;
