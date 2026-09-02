@@ -47,7 +47,7 @@
 
 	const makeNativeChat = async (mode: 'create' | 'resume') => {
 		const name = chatName.trim();
-		if (!name || !targetSessionId || !projectPath.trim()) return;
+		if (!name || !projectPath.trim()) return;
 		if (mode === 'resume' && !resumeId.trim()) {
 			error = 'Enter the Codex conversation UUID to resume.';
 			return;
@@ -86,7 +86,7 @@
 					? await resumeNomadicChat(localStorage.token, payload)
 					: await createNomadicChat(localStorage.token, payload);
 			localStorage.setItem(`nomadic.workspace.chat.${binding.chat_id}`, nativeChatId);
-			await goto(`/c/${nativeChatId}`);
+			await goto(`/workspace/nomadic/chat/${nativeChatId}`);
 		} catch (cause) {
 			if (nativeChatId) await deleteChatById(localStorage.token, nativeChatId).catch(() => null);
 			error = cause instanceof Error ? cause.message : `Could not ${mode} the chat.`;
@@ -112,7 +112,7 @@
 
 	const openChat = async (chat: NomadicChat) => {
 		const nativeChatId = localStorage.getItem(`nomadic.workspace.chat.${chat.id}`);
-		if (nativeChatId) await goto(`/c/${nativeChatId}`);
+		if (nativeChatId) await goto(`/workspace/nomadic/chat/${nativeChatId}`);
 		else error = 'This chat has no Open WebUI binding on this browser yet.';
 	};
 
@@ -218,7 +218,7 @@
 			{error}
 		</div>{/if}
 
-	{#if sessions.length > 0}
+	{#if projectPath.trim() && !loading}
 		<section
 			class="grid gap-3 rounded-2xl border border-gray-200 p-4 dark:border-gray-800 sm:grid-cols-2 lg:grid-cols-4"
 		>
@@ -236,7 +236,7 @@
 					id="nomadic-session"
 					class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900"
 					bind:value={targetSessionId}
-					>{#each sessions as session}<option value={session.id}>{session.name}</option
+					><option value="">Default Chats session</option>{#each sessions as session}<option value={session.id}>{session.name}</option
 						>{/each}</select
 				>
 			</div>
