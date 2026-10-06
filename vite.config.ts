@@ -6,7 +6,10 @@ import { openWebUIBasePath } from './scripts/open-webui-base-path.mjs';
 
 const backendTarget = process.env.WEBUI_BACKEND_URL || 'http://localhost:8080';
 const backendRoute = (path: string) => `${openWebUIBasePath}${path}`;
-const stripBasePath = (path: string) => openWebUIBasePath && path.startsWith(openWebUIBasePath) ? path.slice(openWebUIBasePath.length) || '/' : path;
+const stripBasePath = (path: string) =>
+	openWebUIBasePath && path.startsWith(openWebUIBasePath)
+		? path.slice(openWebUIBasePath.length) || '/'
+		: path;
 
 export default defineConfig({
 	resolve: {
@@ -41,15 +44,18 @@ export default defineConfig({
 			},
 			[backendRoute('/ollama')]: {
 				target: backendTarget,
-				changeOrigin: true, rewrite: stripBasePath
+				changeOrigin: true,
+				rewrite: stripBasePath
 			},
 			[backendRoute('/openai')]: {
 				target: backendTarget,
-				changeOrigin: true, rewrite: stripBasePath
+				changeOrigin: true,
+				rewrite: stripBasePath
 			},
 			[backendRoute('/oauth')]: {
 				target: backendTarget,
-				changeOrigin: true, rewrite: stripBasePath
+				changeOrigin: true,
+				rewrite: stripBasePath
 			},
 			[backendRoute('/ws')]: {
 				target: backendTarget,

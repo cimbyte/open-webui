@@ -118,16 +118,12 @@ async def binding(chat_id: UUID, user=Depends(get_verified_user)):
 
 @router.post('/chats/{chat_id}/prompt')
 async def prompt(chat_id: UUID, payload: BridgePayload, user=Depends(get_verified_user)):
-    return await _bridge_request(
-        'POST', f'/v1/chats/{chat_id}/prompt', user.id, payload.model_dump()
-    )
+    return await _bridge_request('POST', f'/v1/chats/{chat_id}/prompt', user.id, payload.model_dump())
 
 
 @router.post('/chats/{chat_id}/interrupt')
 async def interrupt(chat_id: UUID, payload: BridgePayload, user=Depends(get_verified_user)):
-    return await _bridge_request(
-        'POST', f'/v1/chats/{chat_id}/interrupt', user.id, payload.model_dump()
-    )
+    return await _bridge_request('POST', f'/v1/chats/{chat_id}/interrupt', user.id, payload.model_dump())
 
 
 @router.get('/chats/{chat_id}/events')
