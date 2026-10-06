@@ -2,10 +2,11 @@
 Description=Nomadic Open WebUI
 After=docker.service nomadic-bridge.service
 Requires=nomadic-bridge.service
+PartOf=nomadic-bridge.service
 
 [Service]
 Type=simple
-Environment=NOMADIC_WEBUI_IMAGE=ghcr.io/cimbyte/open-webui@sha256:115b2c30f152fb4fc44501e50dbdd8c27bb49774ea552696b7adc1f66736f79e
+Environment=NOMADIC_WEBUI_IMAGE=ghcr.io/cimbyte/open-webui@sha256:cc55c192c89acb689f2c1faaaef526a61bbb27d9cec8173391b62dad0a286625
 EnvironmentFile=%h/.config/nomadic-open-webui/runtime.env
 ExecStartPre=-/usr/bin/docker rm -f nomadic-open-webui
 ExecStartPre=/usr/bin/docker pull ${NOMADIC_WEBUI_IMAGE}
