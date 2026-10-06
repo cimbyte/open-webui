@@ -257,8 +257,11 @@ async def load_view(
         return {'linked': False}
     await _bridge_json('POST', '/v1/bindings', user.id, binding)
     history = chat.chat.get('history') or {}
-    # Never replace messages authored in Open WebUI or their branch history.
-    if not history.get('messages'):
+    message_id = str(uuid5(UUID(str(chat_id)), 'terminal-snapshot'))
+    messages = history.get('messages') or {}
+    # Refresh our sole snapshot. Preserve authored messages, edits and branch history.
+    snapshot_only = len(messages) == 1 and message_id in messages and 'originalContent' not in messages[message_id]
+    if not messages or snapshot_only:
         query = httpx.QueryParams(
             {
                 'project_path': binding['project_path'],
@@ -266,7 +269,6 @@ async def load_view(
             }
         )
         snapshot = await _bridge_json('GET', f'/v1/chats/{binding["chat_id"]}/snapshot?{query}', user.id)
-        message_id = str(uuid5(UUID(str(chat_id)), 'terminal-snapshot'))
         terminal = snapshot['transcript'].replace('```', '` ` `').strip()
         message = {
             'id': message_id,
