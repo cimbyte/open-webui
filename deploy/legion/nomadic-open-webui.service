@@ -6,7 +6,7 @@ PartOf=nomadic-bridge.service
 
 [Service]
 Type=simple
-Environment=NOMADIC_WEBUI_IMAGE=ghcr.io/cimbyte/open-webui@sha256:cc55c192c89acb689f2c1faaaef526a61bbb27d9cec8173391b62dad0a286625
+Environment=NOMADIC_WEBUI_IMAGE=ghcr.io/cimbyte/open-webui@sha256:7d10885de0dd5ee4b67390075a7d9af8a7eb3adb15e0619ea50a2d345e132788
 EnvironmentFile=%h/.config/nomadic-open-webui/runtime.env
 ExecStartPre=-/usr/bin/docker rm -f nomadic-open-webui
 ExecStartPre=/usr/bin/docker pull ${NOMADIC_WEBUI_IMAGE}
