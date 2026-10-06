@@ -1,14 +1,23 @@
+import asyncio
+import json
 import os
+import time
 from urllib.parse import urlsplit
-from uuid import UUID
+from uuid import UUID, NAMESPACE_URL, uuid5
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from fastapi.responses import StreamingResponse
+from open_webui.internal.db import get_async_session
+from open_webui.models.chats import ChatForm, Chats
+from open_webui.models.folders import FolderForm, Folders
 from open_webui.utils.auth import get_verified_user
+from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel, ConfigDict
 
 router = APIRouter()
+
+_sync_lock = asyncio.Lock()
 
 _BRIDGE_TIMEOUT = httpx.Timeout(15.0, connect=5.0)
 
@@ -163,3 +172,117 @@ async def events(
         media_type='text/event-stream',
         headers={'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no'},
     )
+
+
+async def _bridge_json(method: str, path: str, user_id: str, payload: dict | None = None):
+    response = await _bridge_request(method, path, user_id, payload)
+    value = json.loads(response.body)
+    if response.status_code >= 400:
+        raise HTTPException(response.status_code, value.get('error', 'Nomadic bridge request failed.'))
+    return value
+
+
+class WorkspaceView(BaseModel):
+    project_path: str
+    all_sessions: bool = False
+
+
+@router.post('/view/sync')
+async def sync_view(
+    payload: WorkspaceView,
+    user=Depends(get_verified_user),
+    db: AsyncSession = Depends(get_async_session),
+):
+    query = httpx.QueryParams({'project_path': payload.project_path, 'all_sessions': str(payload.all_sessions).lower()})
+    inventory = await _bridge_json('GET', f'/v1/sessions?{query}', user.id)
+    mapping = {}
+    # Imports create presentation records only. Tmux sessions and windows are untouched.
+    async with _sync_lock:
+        folders = await Folders.get_folders_by_user_id(user.id, db=db)
+        by_session = {(folder.meta or {}).get('nomadic_session_id'): folder for folder in folders}
+        for session in inventory['sessions'] or []:
+            folder = by_session.get(session['id'])
+            if folder is None:
+                folder = await Folders.insert_new_folder(
+                    user.id,
+                    FolderForm(name=session['name'], meta={'nomadic_session_id': session['id']}),
+                    db=db,
+                )
+                if folder is None:
+                    raise HTTPException(500, 'Could not create the session folder.')
+                by_session[session['id']] = folder
+            for item in session['chats'] or []:
+                chat_id = str(uuid5(NAMESPACE_URL, f'nomadic:{user.id}:{item["id"]}'))
+                mapping[item['id']] = chat_id
+                existing = await Chats.get_chat_by_id_and_user_id(chat_id, user.id, db=db)
+                if existing is not None:
+                    continue
+                binding = {
+                    'user_id': user.id,
+                    'open_webui_chat_id': chat_id,
+                    'project_path': payload.project_path,
+                    'all_sessions': payload.all_sessions,
+                    'session_id': session['id'],
+                    'chat_id': item['id'],
+                }
+                await Chats.insert_new_chat(
+                    chat_id,
+                    user.id,
+                    ChatForm(
+                        folder_id=folder.id,
+                        chat={
+                            'title': item['name'],
+                            'models': ['nomadic_codex'],
+                            'history': {'messages': {}, 'currentId': None},
+                            'messages': [],
+                        },
+                    ),
+                    internal_meta={'nomadic': binding},
+                    db=db,
+                )
+    return {'chats': mapping, 'sessions': len(inventory['sessions'] or [])}
+
+
+@router.post('/view/{chat_id}')
+async def load_view(
+    chat_id: UUID,
+    user=Depends(get_verified_user),
+    db: AsyncSession = Depends(get_async_session),
+):
+    chat = await Chats.get_chat_by_id_and_user_id(str(chat_id), user.id, db=db)
+    if chat is None:
+        raise HTTPException(404, 'Chat not found.')
+    binding = (chat.meta or {}).get('nomadic')
+    if not binding:
+        return {'linked': False}
+    await _bridge_json('POST', '/v1/bindings', user.id, binding)
+    history = chat.chat.get('history') or {}
+    # Never replace messages authored in Open WebUI or their branch history.
+    if not history.get('messages'):
+        query = httpx.QueryParams(
+            {
+                'project_path': binding['project_path'],
+                'all_sessions': str(binding.get('all_sessions', False)).lower(),
+            }
+        )
+        snapshot = await _bridge_json('GET', f'/v1/chats/{binding["chat_id"]}/snapshot?{query}', user.id)
+        message_id = str(uuid5(UUID(str(chat_id)), 'terminal-snapshot'))
+        terminal = snapshot['transcript'].replace('```', '` ` `').strip()
+        message = {
+            'id': message_id,
+            'parentId': None,
+            'childrenIds': [],
+            'role': 'assistant',
+            'model': 'nomadic_codex',
+            'modelName': 'Nomadic Codex',
+            'content': 'Current session transcript\n\n```text\n' + terminal + '\n```',
+            'timestamp': int(time.time()),
+            'done': True,
+        }
+        await Chats.update_chat_by_id(
+            str(chat_id),
+            {'history': {'messages': {message_id: message}, 'currentId': message_id}, 'messages': [message]},
+            db=db,
+            touch=False,
+        )
+    return {'linked': True, 'chat_id': binding['chat_id']}

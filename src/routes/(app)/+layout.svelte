@@ -445,7 +445,7 @@
 			{#if !['user', 'admin'].includes($user?.role)}
 				<AccountPending />
 			{:else}
-				<Sidebar />
+				{#if !$page.url.pathname.endsWith('/workspace/nomadic')}<Sidebar />{/if}
 
 				{#if loaded}
 					<main id="main-content" class="contents">

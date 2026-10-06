@@ -49,7 +49,9 @@ const request = async <T>(token: string, path: string, init: RequestInit = {}): 
 
 	if (!response.ok) {
 		const error = await response.json().catch(() => null);
-		throw new Error(error?.detail ?? `Nomadic request failed (${response.status}).`);
+		throw new Error(
+			error?.detail ?? error?.error ?? `Nomadic request failed (${response.status}).`
+		);
 	}
 	return response.json();
 };
@@ -126,3 +128,17 @@ export const interruptNomadicChat = (token: string, chatId: string, projectPath:
 
 export const nomadicEventsUrl = (chatId: string, projectPath: string, after = 0) =>
 	`${WEBUI_API_BASE_URL}/nomadic/chats/${encodeURIComponent(chatId)}/events?project_path=${encodeURIComponent(projectPath)}&after=${after}`;
+
+export const syncNomadicView = (
+	token: string,
+	workspace: { project_path: string; all_sessions: boolean }
+) =>
+	request<{ chats: Record<string, string>; sessions: number }>(token, '/view/sync', {
+		method: 'POST',
+		body: JSON.stringify(workspace)
+	});
+
+export const loadNomadicView = (token: string, chatId: string) =>
+	request<{ linked: boolean; chat_id?: string }>(token, `/view/${encodeURIComponent(chatId)}`, {
+		method: 'POST'
+	});
