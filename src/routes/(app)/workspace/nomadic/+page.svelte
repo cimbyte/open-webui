@@ -47,6 +47,11 @@
 				const context = await workspace();
 				const inventory = await syncNomadicView(localStorage.token, context);
 				chats = inventory.chats;
+				if (preferenceKey && !localStorage.getItem(`${preferenceKey}.initialized`)) {
+					localStorage.sidebar = 'true';
+					localStorage.setItem('sidebar-folders-folder-state', 'true');
+					localStorage.setItem(`${preferenceKey}.initialized`, 'true');
+				}
 				source = chats[selectedChat] ? `${base}/c/${chats[selectedChat]}` : `${base}/`;
 			} else {
 				source = selectedChat
