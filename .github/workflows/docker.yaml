@@ -75,6 +75,7 @@ jobs:
           sbom: true
           build-args: |
             BUILD_HASH=${{ github.sha }}
+            OPEN_WEBUI_BASE_PATH=/web
             USE_SLIM=true
             USE_PERMISSION_HARDENING=true
             UID=10001

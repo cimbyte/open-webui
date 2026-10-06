@@ -9,6 +9,9 @@ const backendRoute = (path: string) => `${openWebUIBasePath}${path}`;
 const stripBasePath = (path: string) => openWebUIBasePath && path.startsWith(openWebUIBasePath) ? path.slice(openWebUIBasePath.length) || '/' : path;
 
 export default defineConfig({
+	resolve: {
+		conditions: ['onnxruntime-web-use-extern-wasm']
+	},
 	plugins: [
 		sveltekit(),
 		viteStaticCopy({

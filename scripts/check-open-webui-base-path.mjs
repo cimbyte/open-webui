@@ -17,7 +17,7 @@ assert.match(read('vite.config.ts'), /rewrite: stripBasePath/);
 assert.match(read('src/routes/+layout.svelte'), /io\(`\$\{WEBUI_BASE_URL\}` \|\| undefined/);
 assert.match(read('src/lib/utils/index.ts'), /pdfWorkerUrl/);
 const preview = read('src/lib/components/chat/FileNav/FilePreview.svelte');
-for (const viewer of ['PDFViewer', 'DocxPreview', 'isMarkdown']) assert.ok(preview.includes(viewer));
+for (const viewer of ['PdfPagesPreview', 'DocxPreview', 'isMarkdown']) assert.ok(preview.includes(viewer));
 const dockerfile = read('Dockerfile');
 assert.match(dockerfile, /ARG OPEN_WEBUI_BASE_PATH=\/web/);
 assert.match(dockerfile, /OPEN_WEBUI_BASE_PATH=\$\{OPEN_WEBUI_BASE_PATH\}/);
