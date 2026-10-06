@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { base } from '$app/paths';
-	import { syncNomadicView } from '$lib/apis/nomadic';
+	import { getNomadicBinding, syncNomadicView } from '$lib/apis/nomadic';
 
 	let view: 'nomadic' | 'openwebui' = 'nomadic';
 	let frame: HTMLIFrameElement;
@@ -20,14 +20,22 @@
 		return value;
 	};
 
-	const rememberSelection = () => {
+	const rememberSelection = async () => {
 		try {
 			const path = frame?.contentWindow?.location.pathname ?? '';
 			const match = path.match(/\/(chats|c)\/([^/]+)$/);
 			if (!match) return;
 			const id = decodeURIComponent(match[2]);
-			const nativeId =
+			let nativeId =
 				match[1] === 'chats' ? id : Object.keys(chats).find((key) => chats[key] === id);
+			if (!nativeId && match[1] === 'c') {
+				const binding = await getNomadicBinding(localStorage.token, id).catch(() => null);
+				if (frame?.contentWindow?.location.pathname !== path) return;
+				if (binding) {
+					nativeId = binding.chat_id;
+					chats = { ...chats, [nativeId]: id };
+				}
+			}
 			if (nativeId) {
 				selectedChat = nativeId;
 				if (preferenceKey) localStorage.setItem(`${preferenceKey}.chat`, nativeId);
@@ -39,7 +47,7 @@
 
 	const switchView = async (next: 'nomadic' | 'openwebui') => {
 		if (busy || (next === view && loaded)) return;
-		rememberSelection();
+		await rememberSelection();
 		busy = true;
 		error = '';
 		try {

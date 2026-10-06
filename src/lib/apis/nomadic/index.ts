@@ -139,6 +139,10 @@ export const syncNomadicView = (
 	});
 
 export const loadNomadicView = (token: string, chatId: string) =>
-	request<{ linked: boolean; chat_id?: string }>(token, `/view/${encodeURIComponent(chatId)}`, {
-		method: 'POST'
-	});
+	request<{ linked: boolean; chat_id?: string; can_prompt?: boolean }>(
+		token,
+		`/view/${encodeURIComponent(chatId)}`,
+		{
+			method: 'POST'
+		}
+	);

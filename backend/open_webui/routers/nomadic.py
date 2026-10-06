@@ -8,10 +8,11 @@ from uuid import UUID, NAMESPACE_URL, uuid5
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from fastapi.responses import StreamingResponse
-from open_webui.internal.db import get_async_session
-from open_webui.models.chats import ChatForm, Chats
+from open_webui.internal.db import get_async_db_context, get_async_session
+from open_webui.models.chats import Chat, ChatForm, Chats
 from open_webui.models.folders import FolderForm, Folders
 from open_webui.utils.auth import get_verified_user
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel, ConfigDict
 
@@ -200,6 +201,9 @@ async def sync_view(
     async with _sync_lock:
         folders = await Folders.get_folders_by_user_id(user.id, db=db)
         by_session = {(folder.meta or {}).get('nomadic_session_id'): folder for folder in folders}
+        async with get_async_db_context(db) as session_db:
+            existing_rows = (await session_db.execute(select(Chat.id, Chat.meta).where(Chat.user_id == user.id))).all()
+        by_chat = {((meta or {}).get('nomadic') or {}).get('chat_id'): chat_id for chat_id, meta in existing_rows}
         for session in inventory['sessions'] or []:
             folder = by_session.get(session['id'])
             if folder is None:
@@ -212,7 +216,7 @@ async def sync_view(
                     raise HTTPException(500, 'Could not create the session folder.')
                 by_session[session['id']] = folder
             for item in session['chats'] or []:
-                chat_id = str(uuid5(NAMESPACE_URL, f'nomadic:{user.id}:{item["id"]}'))
+                chat_id = by_chat.get(item['id']) or str(uuid5(NAMESPACE_URL, f'nomadic:{user.id}:{item["id"]}'))
                 mapping[item['id']] = chat_id
                 existing = await Chats.get_chat_by_id_and_user_id(chat_id, user.id, db=db)
                 if existing is not None:
@@ -256,19 +260,19 @@ async def load_view(
     if not binding:
         return {'linked': False}
     await _bridge_json('POST', '/v1/bindings', user.id, binding)
+    query = httpx.QueryParams(
+        {
+            'project_path': binding['project_path'],
+            'all_sessions': str(binding.get('all_sessions', False)).lower(),
+        }
+    )
+    snapshot = await _bridge_json('GET', f'/v1/chats/{binding["chat_id"]}/snapshot?{query}', user.id)
     history = chat.chat.get('history') or {}
     message_id = str(uuid5(UUID(str(chat_id)), 'terminal-snapshot'))
     messages = history.get('messages') or {}
     # Refresh our sole snapshot. Preserve authored messages, edits and branch history.
     snapshot_only = len(messages) == 1 and message_id in messages and 'originalContent' not in messages[message_id]
     if not messages or snapshot_only:
-        query = httpx.QueryParams(
-            {
-                'project_path': binding['project_path'],
-                'all_sessions': str(binding.get('all_sessions', False)).lower(),
-            }
-        )
-        snapshot = await _bridge_json('GET', f'/v1/chats/{binding["chat_id"]}/snapshot?{query}', user.id)
         terminal = snapshot['transcript'].replace('```', '` ` `').strip()
         message = {
             'id': message_id,
@@ -287,4 +291,4 @@ async def load_view(
             db=db,
             touch=False,
         )
-    return {'linked': True, 'chat_id': binding['chat_id']}
+    return {'linked': True, 'chat_id': binding['chat_id'], 'can_prompt': snapshot['state'] != 'stopped'}

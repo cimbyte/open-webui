@@ -130,6 +130,7 @@
 	import InputVariablesModal from './MessageInput/InputVariablesModal.svelte';
 
 	export let chatIdProp = '';
+	export let nomadicCanPrompt = true;
 	export let embedded = false;
 	export let embeddedTitle = '';
 	export let embeddedChats = [];
@@ -4425,10 +4426,21 @@
 								</div>
 							</div>
 
-							{#if readOnly}
+							{#if readOnly || !nomadicCanPrompt}
 								<div class="pb-6 z-10">
 									<div class="text-xs text-gray-400 dark:text-gray-500 text-center">
-										{$i18n.t('Read only')}
+										{#if !nomadicCanPrompt}
+											<p>
+												Codex is stopped in this session. Start a new chat to use your ChatGPT
+												subscription.
+											</p>
+											<a
+												class="mt-2 inline-block rounded-lg bg-gray-900 px-3 py-2 text-sm text-white dark:bg-white dark:text-gray-900"
+												href={`${WEBUI_BASE_URL}/`}>New Codex chat</a
+											>
+										{:else}
+											{$i18n.t('Read only')}
+										{/if}
 									</div>
 								</div>
 							{:else}
