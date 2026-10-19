@@ -1442,6 +1442,7 @@
 			: 'light'}
 	richColors
 	position="top-right"
+	offset={$page.url.pathname.endsWith('/workspace/nomadic') ? 72 : null}
 	closeButton
 	toastOptions={{
 		classes: {
