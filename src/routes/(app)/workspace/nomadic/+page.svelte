@@ -113,7 +113,7 @@
 
 <svelte:head><title>Nomadic / Open WebUI</title></svelte:head>
 
-<div class="flex h-full min-h-0 w-full flex-col">
+<div class="nomadic-workspace flex h-full min-h-0 w-full flex-col">
 	<header
 		class="flex shrink-0 items-center justify-between gap-2 border-b border-gray-200 px-3 py-2 dark:border-gray-800"
 	>
@@ -161,3 +161,9 @@
 		{/key}
 	</div>
 </div>
+
+<style>
+	:global(body:has(.nomadic-workspace) [data-sonner-toaster][data-y-position='top']) {
+		top: 72px !important;
+	}
+</style>
